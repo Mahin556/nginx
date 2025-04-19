@@ -1,0 +1,16 @@
+---
+- name: restart nginx
+  service:
+    name: nginx
+    state: restarted
+    enabled: true
+
+- name: Config firewall rules
+  firewalld:
+    service: "{{ item }}"
+    state: enabled
+    permanent: true
+    immediate: true
+  loop:
+    - http
+    - https

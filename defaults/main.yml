@@ -1,0 +1,5 @@
+---
+pkgs:
+  - nginx
+
+doc_root: "/usr/share/nginx/html"

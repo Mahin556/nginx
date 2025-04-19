@@ -1,0 +1,46 @@
+---
+- name: Installing a required packages
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ pkgs }}"
+  notify: restart nginx
+
+- name: Generating a ssl Certificate and Key
+  include_tasks: ssl.yml
+  when: ssl is defined and ssl | lower == "yes"
+
+- name: "Preparing the configuration file for {{ cert_common_name }}"
+  template:
+    src: "{{ cert_org_name }}.conf.j2"
+    dest: /etc/nginx/conf.d/{{ cert_org_name }}.conf
+  notify: restart nginx
+
+- name: "Ensuring the document root exists"
+  file:
+    path: "{{ doc_root }}"
+    state: directory
+    mode: "0755"
+
+- name: Enabling a basic user authentication
+  include_tasks: auth.yml
+  when: auth_enabled is defined and auth_enabled | lower == "yes"
+
+- name: "Preparing the index page"
+  template:
+    src: ./index.html.j2
+    dest: "{{ doc_root }}/index.html"
+   
+- name: Making SELinux State Permissive
+  selinux:
+    policy: targeted
+    state: permissive
+
+- name: restart firewalld
+  service:
+    name: firewalld
+    state: restarted
+    enabled: true
+  notify: Config firewall rules
+
+    
